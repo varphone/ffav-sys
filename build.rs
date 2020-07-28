@@ -131,12 +131,13 @@ fn search() -> PathBuf {
 }
 
 fn fetch() -> io::Result<()> {
+    let url = env::var("FFMPEG_GIT_URL").unwrap_or("https://github.com/FFmpeg/FFmpeg".to_string());
     let status = Command::new("git")
             .current_dir(&output())
             .arg("clone")
             .arg("-b")
             .arg(format!("release/{}", version()))
-            .arg("https://github.com/FFmpeg/FFmpeg")
+            .arg(url)
             .arg(format!("ffmpeg-{}", version()))
             .status()?;
 
