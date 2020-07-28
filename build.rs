@@ -165,6 +165,8 @@ fn build() -> io::Result<()> {
 
     if env::var("TARGET").unwrap() != env::var("HOST").unwrap() {
         configure.arg(format!("--cross-prefix={}-", env::var("TARGET").unwrap()));
+        configure.arg(format!("--arch={}", env::var("CARGO_CFG_TARGET_ARCH").unwrap()));
+        configure.arg(format!("--target-os={}", env::var("CARGO_CFG_TARGET_OS").unwrap()));
     }
 
     // control debug build
