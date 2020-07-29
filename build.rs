@@ -2660,6 +2660,27 @@ fn link_to_libraries(statik: bool) {
     }
 }
 
+fn link_libs_for_module(module: &str) {
+    let config_mak = source().join("ffbuild/config.mak");
+    let file = File::open(config_mak).unwrap();
+    let reader = BufReader::new(file);
+    for line in reader.lines().map(|line| line.unwrap()) {
+        if !line.starts_with("EXTRALIBS-") {
+            continue;
+        }
+        if !line.contains(module) {
+            continue;
+        }
+        let linker_args = line.split('=').last().unwrap().split(' ');
+        let include_libs = linker_args
+            .filter(|v| v.starts_with("-l"))
+            .map(|flag| &flag[2..]);
+        for lib in include_libs {
+            println!("cargo:rustc-link-lib={}", lib);
+        }
+    }
+}
+
 fn main() {
     let statik = env::var("CARGO_FEATURE_STATIC").is_ok();
 
@@ -2695,6 +2716,27 @@ fn main() {
 
             for lib in include_libs {
                 println!("cargo:rustc-link-lib={}", lib);
+            }
+        }
+
+        // Check per-module required libraries.
+        {
+            let libs = vec![
+                ("avcodec", "AVCODEC"),
+                ("avdevice", "AVDEVICE"),
+                ("avfilter", "AVFILTER"),
+                ("avformat", "AVFORMAT"),
+                ("avresample", "AVRESAMPLE"),
+                ("avutil", "AVUTIL"),
+                ("postproc", "POSTPROC"),
+                ("swresample", "SWRESAMPLE"),
+                ("swscale", "SWSCALE"),
+            ];
+
+            for (lib_name, env_variable_name) in libs.iter() {
+                if env::var(format!("CARGO_FEATURE_{}", env_variable_name)).is_ok() {
+                    link_libs_for_module(lib_name);
+                }
             }
         }
 
