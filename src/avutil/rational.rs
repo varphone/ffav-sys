@@ -1,11 +1,13 @@
 use crate::AVRational;
 use libc::{c_double, c_int};
 
+/// # Safety
 #[inline(always)]
 pub unsafe fn av_make_q(num: c_int, den: c_int) -> AVRational {
-    AVRational { num: num, den: den }
+    AVRational { num, den }
 }
 
+/// # Safety
 #[inline(always)]
 pub unsafe fn av_cmp_q(a: AVRational, b: AVRational) -> c_int {
     let tmp = i64::from(a.num) * i64::from(b.den) - i64::from(b.num) * i64::from(a.den);
@@ -21,11 +23,13 @@ pub unsafe fn av_cmp_q(a: AVRational, b: AVRational) -> c_int {
     }
 }
 
+/// # Safety
 #[inline(always)]
 pub unsafe fn av_q2d(a: AVRational) -> c_double {
     f64::from(a.num) / f64::from(a.den)
 }
 
+/// # Safety
 #[inline(always)]
 pub unsafe fn av_inv_q(q: AVRational) -> AVRational {
     AVRational {

@@ -11,8 +11,9 @@ pub fn AVUNERROR(e: c_int) -> c_int {
 }
 
 macro_rules! FFERRTAG {
-	($a:expr, $b:expr, $c:expr, $d:expr) =>
-		(-MKTAG!($a, $b, $c, $d) as c_int)
+    ($a:expr, $b:expr, $c:expr, $d:expr) => {
+        -MKTAG!($a, $b, $c, $d) as c_int
+    };
 }
 
 pub const AVERROR_BSF_NOT_FOUND: c_int = FFERRTAG!(0xF8, b'B', b'S', b'F');
@@ -43,6 +44,7 @@ pub const AVERROR_HTTP_NOT_FOUND: c_int = FFERRTAG!(0xF8, b'4', b'0', b'4');
 pub const AVERROR_HTTP_OTHER_4XX: c_int = FFERRTAG!(0xF8, b'4', b'X', b'X');
 pub const AVERROR_HTTP_SERVER_ERROR: c_int = FFERRTAG!(0xF8, b'5', b'X', b'X');
 
+/// # Safety
 #[inline(always)]
 pub unsafe fn av_make_error_string(
     errbuf: *mut c_char,
@@ -56,4 +58,16 @@ pub unsafe fn av_make_error_string(
 
 extern "C" {
     pub fn av_strerror(errnum: c_int, errbuf: *mut c_char, errbuf_size: size_t) -> c_int;
+}
+
+pub fn av_err2str(errnum: c_int) -> &'static str {
+    unsafe {
+        use crate::AV_ERROR_MAX_STRING_SIZE;
+        let mut buf: [c_char; AV_ERROR_MAX_STRING_SIZE] = [0; AV_ERROR_MAX_STRING_SIZE];
+        if av_strerror(errnum, buf.as_mut_ptr(), buf.len()) == 0 {
+            std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(buf.as_ptr()).to_bytes())
+        } else {
+            ""
+        }
+    }
 }

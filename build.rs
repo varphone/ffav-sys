@@ -11,8 +11,10 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::str;
 
+use bindgen::callbacks::{
+    EnumVariantCustomBehavior, EnumVariantValue, IntKind, MacroParsingBehavior, ParseCallbacks,
+};
 use regex::Regex;
-use bindgen::callbacks::{EnumVariantCustomBehavior, EnumVariantValue, IntKind, ParseCallbacks, MacroParsingBehavior};
 
 #[derive(Debug)]
 struct Library {
@@ -31,32 +33,62 @@ impl Library {
 }
 
 static LIBRARIES: &[Library] = &[
-    Library {name: "avcodec", is_feature: true},
-    Library {name: "avdevice", is_feature: true},
-    Library {name: "avfilter", is_feature: true},
-    Library {name: "avformat", is_feature: true},
-    Library {name: "avresample", is_feature: true},
-    Library {name: "avutil", is_feature: false},
-    Library {name: "postproc", is_feature: true},
-    Library {name: "swresample", is_feature: true},
-    Library {name: "swscale", is_feature: true},
+    Library {
+        name: "avcodec",
+        is_feature: true,
+    },
+    Library {
+        name: "avdevice",
+        is_feature: true,
+    },
+    Library {
+        name: "avfilter",
+        is_feature: true,
+    },
+    Library {
+        name: "avformat",
+        is_feature: true,
+    },
+    Library {
+        name: "avresample",
+        is_feature: true,
+    },
+    Library {
+        name: "avutil",
+        is_feature: false,
+    },
+    Library {
+        name: "postproc",
+        is_feature: true,
+    },
+    Library {
+        name: "swresample",
+        is_feature: true,
+    },
+    Library {
+        name: "swscale",
+        is_feature: true,
+    },
 ];
 
 #[derive(Debug)]
 struct Callbacks;
 
 impl ParseCallbacks for Callbacks {
+    #[allow(clippy::trivial_regex)]
     fn int_macro(&self, _name: &str, value: i64) -> Option<IntKind> {
         let ch_layout = Regex::new(r"^AV_CH").unwrap();
         let codec_cap = Regex::new(r"^AV_CODEC_CAP").unwrap();
         let codec_flag = Regex::new(r"^AV_CODEC_FLAG").unwrap();
         let error_max_size = Regex::new(r"^AV_ERROR_MAX_STRING_SIZE").unwrap();
 
-        if value >= i64::min_value() as i64 && value <= i64::max_value() as i64
+        if value >= i64::min_value() as i64
+            && value <= i64::max_value() as i64
             && ch_layout.is_match(_name)
         {
             Some(IntKind::ULongLong)
-        } else if value >= i32::min_value() as i64 && value <= i32::max_value() as i64
+        } else if value >= i32::min_value() as i64
+            && value <= i32::max_value() as i64
             && (codec_cap.is_match(_name) || codec_flag.is_match(_name))
         {
             Some(IntKind::UInt)
@@ -72,6 +104,7 @@ impl ParseCallbacks for Callbacks {
         }
     }
 
+    #[allow(clippy::trivial_regex)]
     fn enum_variant_behavior(
         &self,
         _enum_name: Option<&str>,
@@ -131,18 +164,22 @@ fn search() -> PathBuf {
 }
 
 fn fetch() -> io::Result<()> {
-    if fs::metadata(&output().join(format!("ffmpeg-{}", version())).join("configure")).is_ok() {
+    let configure_path = &output()
+        .join(format!("ffmpeg-{}", version()))
+        .join("configure");
+    if fs::metadata(configure_path).is_ok() {
         return Ok(());
     }
-    let url = env::var("FFMPEG_GIT_URL").unwrap_or("https://github.com/FFmpeg/FFmpeg".to_string());
+    let url = env::var("FFMPEG_GIT_URL")
+        .unwrap_or_else(|_| "https://github.com/FFmpeg/FFmpeg".to_string());
     let status = Command::new("git")
-            .current_dir(&output())
-            .arg("clone")
-            .arg("-b")
-            .arg(format!("release/{}", version()))
-            .arg(url)
-            .arg(format!("ffmpeg-{}", version()))
-            .status()?;
+        .current_dir(&output())
+        .arg("clone")
+        .arg("-b")
+        .arg(format!("release/{}", version()))
+        .arg(url)
+        .arg(format!("ffmpeg-{}", version()))
+        .status()?;
 
     if status.success() {
         Ok(())
@@ -154,8 +191,7 @@ fn fetch() -> io::Result<()> {
 fn switch(configure: &mut Command, feature: &str, name: &str) {
     let arg = if env::var("CARGO_FEATURE_".to_string() + feature).is_ok() {
         "--enable-"
-    }
-    else {
+    } else {
         "--disable-"
     };
     configure.arg(arg.to_string() + name);
@@ -175,8 +211,14 @@ fn build() -> io::Result<()> {
             let (target, _) = &linker.split_at(linker.rfind('-').unwrap());
             configure.arg(format!("--cross-prefix={}-", target));
         }
-        configure.arg(format!("--arch={}", env::var("CARGO_CFG_TARGET_ARCH").unwrap()));
-        configure.arg(format!("--target-os={}", env::var("CARGO_CFG_TARGET_OS").unwrap()));
+        configure.arg(format!(
+            "--arch={}",
+            env::var("CARGO_CFG_TARGET_ARCH").unwrap()
+        ));
+        configure.arg(format!(
+            "--target-os={}",
+            env::var("CARGO_CFG_TARGET_OS").unwrap()
+        ));
     }
 
     // control debug build
@@ -198,11 +240,11 @@ fn build() -> io::Result<()> {
     configure.arg("--disable-programs");
 
     macro_rules! enable {
-        ($conf:expr, $feat:expr, $name:expr) => (
+        ($conf:expr, $feat:expr, $name:expr) => {
             if env::var(concat!("CARGO_FEATURE_", $feat)).is_ok() {
                 $conf.arg(concat!("--enable-", $name));
             }
-        )
+        };
     }
 
     // macro_rules! disable {
@@ -2434,7 +2476,7 @@ fn build() -> io::Result<()> {
     // run ./configure
     let output = configure
         .output()
-        .expect(&format!("{:?} failed", configure));
+        .unwrap_or_else(|_| panic!("{:?} failed", configure));
     if !output.status.success() {
         println!("configure: {}", String::from_utf8_lossy(&output.stdout));
 
@@ -2449,21 +2491,21 @@ fn build() -> io::Result<()> {
 
     // run make
     if !Command::new("make")
-            .arg("-j")
-            .arg(num_cpus::get().to_string())
-            .current_dir(&source())
-            .status()?
-            .success()
+        .arg("-j")
+        .arg(num_cpus::get().to_string())
+        .current_dir(&source())
+        .status()?
+        .success()
     {
         return Err(io::Error::new(io::ErrorKind::Other, "make failed"));
     }
 
     // run make install
     if !Command::new("make")
-            .current_dir(&source())
-            .arg("install")
-            .status()?
-            .success()
+        .current_dir(&source())
+        .arg("install")
+        .status()?
+        .success()
     {
         return Err(io::Error::new(io::ErrorKind::Other, "make install failed"));
     }
@@ -2473,7 +2515,7 @@ fn build() -> io::Result<()> {
 
 fn check_features(
     include_paths: Vec<PathBuf>,
-    infos: &Vec<(&'static str, Option<&'static str>, &'static str)>,
+    infos: &[(&'static str, Option<&'static str>, &'static str)],
 ) {
     let mut includes_code = String::new();
     let mut main_code = String::new();
@@ -2541,7 +2583,8 @@ fn check_features(
            "#,
         includes_code = includes_code,
         main_code = main_code
-    ).expect("Write failed");
+    )
+    .expect("Write failed");
 
     let executable = out_dir.join(if cfg!(windows) { "check.exe" } else { "check" });
     let mut compiler = cc::Build::new()
@@ -2626,21 +2669,21 @@ fn check_features(
     }
 }
 
-fn search_include(include_paths: &Vec<PathBuf>, header: &str) -> String {
+fn search_include(include_paths: &[PathBuf], header: &str) -> String {
     for dir in include_paths {
         let include = dir.join(header);
         if fs::metadata(&include).is_ok() {
-            return format!("{}", include.as_path().to_str().unwrap());
+            return include.as_path().to_str().unwrap().to_string();
         }
     }
     format!("/usr/include/{}", header)
 }
 
-fn search_include_optional(include_paths: &Vec<PathBuf>, header: &str) -> Option<String> {
+fn search_include_optional(include_paths: &[PathBuf], header: &str) -> Option<String> {
     for dir in include_paths {
         let include = dir.join(header);
         if fs::metadata(&include).is_ok() {
-            return Some(format!("{}", include.as_path().to_str().unwrap()));
+            return Some(include.as_path().to_str().unwrap().to_string());
         }
     }
     None
@@ -2649,8 +2692,7 @@ fn search_include_optional(include_paths: &Vec<PathBuf>, header: &str) -> Option
 fn link_to_libraries(statik: bool) {
     let ffmpeg_ty = if statik { "static" } else { "dylib" };
     for lib in LIBRARIES {
-        let feat_is_enabled =
-            lib.feature_name().and_then(|f| env::var(&f).ok()).is_some();
+        let feat_is_enabled = lib.feature_name().and_then(|f| env::var(&f).ok()).is_some();
         if !lib.is_feature || feat_is_enabled {
             println!("cargo:rustc-link-lib={}={}", ffmpeg_ty, lib.name);
         }
@@ -2691,9 +2733,7 @@ fn main() {
         );
         link_to_libraries(statik);
         if fs::metadata(&search().join("lib").join("libavutil.a")).is_err() {
-            fs::create_dir_all(&output())
-                .ok()
-                .expect("failed to create build directory");
+            fs::create_dir_all(&output()).expect("failed to create build directory");
             fetch().unwrap();
             build().unwrap();
         }
@@ -2754,11 +2794,13 @@ fn main() {
     }
     // Fallback to pkg-config
     else {
-        pkg_config::Config::new()
+        let mut all_paths: Vec<PathBuf> = vec![];
+        let paths = pkg_config::Config::new()
             .statik(statik)
             .probe("libavutil")
             .unwrap()
             .include_paths;
+        all_paths.extend(paths);
 
         let libs = vec![
             ("libavformat", "AVFORMAT"),
@@ -2771,19 +2813,23 @@ fn main() {
 
         for (lib_name, env_variable_name) in libs.iter() {
             if env::var(format!("CARGO_FEATURE_{}", env_variable_name)).is_ok() {
-                pkg_config::Config::new()
+                let paths = pkg_config::Config::new()
                     .statik(statik)
                     .probe(lib_name)
                     .unwrap()
                     .include_paths;
+                all_paths.extend(paths);
             }
-        };
+        }
 
-        pkg_config::Config::new()
+        let paths = pkg_config::Config::new()
             .statik(statik)
             .probe("libavcodec")
             .unwrap()
-            .include_paths
+            .include_paths;
+        all_paths.extend(paths);
+
+        all_paths
     };
 
     if statik && cfg!(target_os = "macos") {
@@ -2812,7 +2858,7 @@ fn main() {
 
     check_features(
         include_paths.clone(),
-        &vec![
+        &[
             ("libavutil/avutil.h", None, "FF_API_OLD_AVOPTIONS"),
             ("libavutil/avutil.h", None, "FF_API_PIX_FMT"),
             ("libavutil/avutil.h", None, "FF_API_CONTEXT_SIZE"),
@@ -3233,9 +3279,10 @@ fn main() {
     }
 
     // Finish the builder and generate the bindings.
-    let bindings = builder.generate()
-    // Unwrap the Result and panic on failure.
-    .expect("Unable to generate bindings");
+    let bindings = builder
+        .generate()
+        // Unwrap the Result and panic on failure.
+        .expect("Unable to generate bindings");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     bindings
