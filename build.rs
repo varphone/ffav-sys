@@ -131,6 +131,9 @@ fn search() -> PathBuf {
 }
 
 fn fetch() -> io::Result<()> {
+    if fs::metadata(&output().join(format!("ffmpeg-{}", version())).join("configure")).is_ok() {
+        return Ok(());
+    }
     let url = env::var("FFMPEG_GIT_URL").unwrap_or("https://github.com/FFmpeg/FFmpeg".to_string());
     let status = Command::new("git")
             .current_dir(&output())
