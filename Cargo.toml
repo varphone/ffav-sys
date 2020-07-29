@@ -3,6 +3,7 @@ name    = "ffmpeg-sys-next"
 version = "4.3.0"
 build   = "build.rs"
 links   = "ffmpeg"
+edition = "2018"
 
 authors = ["meh. <meh@schizofreni.co>", "Zhiming Wang <i@zhimingwang.org>"]
 license = "WTFPL"
