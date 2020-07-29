@@ -167,7 +167,14 @@ fn build() -> io::Result<()> {
     configure.arg(format!("--prefix={}", search().to_string_lossy()));
 
     if env::var("TARGET").unwrap() != env::var("HOST").unwrap() {
-        configure.arg(format!("--cross-prefix={}-", env::var("TARGET").unwrap()));
+        let target = env::var("TARGET").unwrap();
+        let linker = env::var("RUSTC_LINKER").unwrap();
+        if linker.contains(&target) {
+            configure.arg(format!("--cross-prefix={}-", target));
+        } else {
+            let (target, _) = &linker.split_at(linker.rfind('-').unwrap());
+            configure.arg(format!("--cross-prefix={}-", target));
+        }
         configure.arg(format!("--arch={}", env::var("CARGO_CFG_TARGET_ARCH").unwrap()));
         configure.arg(format!("--target-os={}", env::var("CARGO_CFG_TARGET_OS").unwrap()));
     }
