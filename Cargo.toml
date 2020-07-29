@@ -94,14 +94,15 @@ build-lib-smbclient = ["build"]
 build-lib-ssh       = ["build"]
 
 # components
-avcodec    = []
+avcodec    = ["avutil"]
 avdevice   = ["avformat"]
-avfilter   = []
+avfilter   = ["avutil"]
 avformat   = ["avcodec"]
-avresample = []
-postproc   = []
-swresample = []
-swscale    = []
+avresample = ["avutil"]
+avutil     = []
+postproc   = ["avutil"]
+swresample = ["avutil"]
+swscale    = ["avutil"]
 
 disable-everything = [
     "disable-bsfs",
