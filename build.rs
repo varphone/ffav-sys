@@ -2544,7 +2544,10 @@ fn check_features(
     ).expect("Write failed");
 
     let executable = out_dir.join(if cfg!(windows) { "check.exe" } else { "check" });
-    let mut compiler = cc::Build::new().get_compiler().to_command();
+    let mut compiler = cc::Build::new()
+        .target(&env::var("HOST").unwrap())
+        .get_compiler()
+        .to_command();
 
     for dir in include_paths {
         compiler.arg("-I");
