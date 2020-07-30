@@ -60,14 +60,17 @@ extern "C" {
     pub fn av_strerror(errnum: c_int, errbuf: *mut c_char, errbuf_size: size_t) -> c_int;
 }
 
-pub fn av_err2str(errnum: c_int) -> &'static str {
+pub fn av_err2str(errnum: c_int) -> String {
     unsafe {
         use crate::AV_ERROR_MAX_STRING_SIZE;
         let mut buf: [c_char; AV_ERROR_MAX_STRING_SIZE] = [0; AV_ERROR_MAX_STRING_SIZE];
         if av_strerror(errnum, buf.as_mut_ptr(), buf.len()) == 0 {
-            std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(buf.as_ptr()).to_bytes())
+            std::ffi::CStr::from_ptr(buf.as_ptr())
+                .to_str()
+                .unwrap()
+                .to_owned()
         } else {
-            ""
+            "".to_owned()
         }
     }
 }
