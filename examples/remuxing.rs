@@ -175,6 +175,8 @@ fn main() {
                 ofmt_ctx.nb_streams.try_into().unwrap(),
             );
 
+            let mut cur_pts: [i64; 64] = [0; 64];
+
             'inner: loop {
                 ret = av_read_frame(ifmt_ctx_ptr, &mut pkt);
                 if ret < 0 {
@@ -192,10 +194,19 @@ fn main() {
 
                 pkt.stream_index = stream_mapping[curr_stream_index];
                 let out_stream_ptr = out_streams[curr_stream_index];
-                log_packet(ifmt_ctx_ptr, &pkt, "in");
 
                 let in_stream = &mut *in_stream_ptr;
                 let out_stream = &mut *out_stream_ptr;
+
+                let orig_pts = pkt.pts;
+                let orig_duration = pkt.duration;
+
+                if orig_pts == AV_NOPTS_VALUE {
+                    pkt.pts = cur_pts[curr_stream_index];
+                    pkt.dts = pkt.pts;
+                }
+
+                log_packet(ifmt_ctx_ptr, &pkt, "in");
 
                 /* copy packet */
                 pkt.pts = av_rescale_q_rnd(
@@ -220,6 +231,11 @@ fn main() {
                     println!("Error muxing packet");
                     break 'inner;
                 }
+
+                if orig_pts == AV_NOPTS_VALUE {
+                    cur_pts[curr_stream_index] += orig_duration;
+                }
+
                 av_packet_unref(&mut pkt);
             }
 
