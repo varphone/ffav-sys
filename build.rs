@@ -197,6 +197,10 @@ fn switch(configure: &mut Command, feature: &str, name: &str) {
     configure.arg(arg.to_string() + name);
 }
 
+fn check_prog(name: &str, args: &[&str]) -> bool {
+    Command::new(name).args(args).status().is_ok()
+}
+
 fn build() -> io::Result<()> {
     let mut configure = Command::new("./configure");
     configure.current_dir(&source());
@@ -234,111 +238,42 @@ fn build() -> io::Result<()> {
     configure.arg("--enable-static");
     configure.arg("--disable-shared");
 
-    configure.arg("--enable-pic");
+    // configure options with features
+    for (k, _v) in env::vars() {
+        if k.starts_with("CARGO_FEATURE_DISABLE_") {
+            let (_, opt) = k.split_at(22);
+            configure.arg(format!("--disable-{}", opt.to_lowercase()));
+        } else if k.starts_with("CARGO_FEATURE_ENABLE_") {
+            let (_, opt) = k.split_at(21);
+            configure.arg(format!("--enable-{}", opt.to_lowercase()));
+        }
+    }
 
     // do not build programs since we don't need them
     configure.arg("--disable-programs");
 
-    macro_rules! enable {
-        ($conf:expr, $feat:expr, $name:expr) => {
-            if env::var(concat!("CARGO_FEATURE_", $feat)).is_ok() {
-                $conf.arg(concat!("--enable-", $name));
-            }
-        };
+    // do not build documents since we don't need them
+    configure.arg("--disable-doc");
+    // configure.arg("--disable-htmlpages");
+    // configure.arg("--disable-manpages");
+    // configure.arg("--disable-podpages");
+    // configure.arg("--disable-txtpages");
+
+    // disable x86asm when nasm or yasm not exists
+    if cfg!(any(target_arch = "x86", target_arch = "x86_64")) {
+        if !check_prog("nasm", &["--version"]) && !check_prog("yasm", &["--version"]) {
+            configure.arg("--disable-x86asm");
+        }
     }
-
-    // macro_rules! disable {
-    //     ($conf:expr, $feat:expr, $name:expr) => (
-    //         if env::var(concat!("CARGO_FEATURE_", $feat)).is_err() {
-    //             $conf.arg(concat!("--disable-", $name));
-    //         }
-    //     )
-    // }
-
-    // the binary using ffmpeg-sys must comply with GPL
-    switch(&mut configure, "BUILD_LICENSE_GPL", "gpl");
-
-    // the binary using ffmpeg-sys must comply with (L)GPLv3
-    switch(&mut configure, "BUILD_LICENSE_VERSION3", "version3");
-
-    // the binary using ffmpeg-sys cannot be redistributed
-    switch(&mut configure, "BUILD_LICENSE_NONFREE", "nonfree");
 
     // configure building libraries based on features
     for lib in LIBRARIES.iter().filter(|lib| lib.is_feature) {
         switch(&mut configure, &lib.name.to_uppercase(), lib.name);
     }
 
-    // configure external SSL libraries
-    enable!(configure, "BUILD_LIB_GNUTLS", "gnutls");
-    enable!(configure, "BUILD_LIB_OPENSSL", "openssl");
-
-    // configure external filters
-    enable!(configure, "BUILD_LIB_FONTCONFIG", "fontconfig");
-    enable!(configure, "BUILD_LIB_FREI0R", "frei0r");
-    enable!(configure, "BUILD_LIB_LADSPA", "ladspa");
-    enable!(configure, "BUILD_LIB_ASS", "libass");
-    enable!(configure, "BUILD_LIB_FREETYPE", "libfreetype");
-    enable!(configure, "BUILD_LIB_FRIBIDI", "libfribidi");
-    enable!(configure, "BUILD_LIB_OPENCV", "libopencv");
-
-    // configure external encoders/decoders
-    enable!(configure, "BUILD_LIB_AACPLUS", "libaacplus");
-    enable!(configure, "BUILD_LIB_CELT", "libcelt");
-    enable!(configure, "BUILD_LIB_DCADEC", "libdcadec");
-    enable!(configure, "BUILD_LIB_FAAC", "libfaac");
-    enable!(configure, "BUILD_LIB_FDK_AAC", "libfdk-aac");
-    enable!(configure, "BUILD_LIB_GSM", "libgsm");
-    enable!(configure, "BUILD_LIB_ILBC", "libilbc");
-    enable!(configure, "BUILD_LIB_VAZAAR", "libvazaar");
-    enable!(configure, "BUILD_LIB_MP3LAME", "libmp3lame");
-    enable!(configure, "BUILD_LIB_OPENCORE_AMRNB", "libopencore-amrnb");
-    enable!(configure, "BUILD_LIB_OPENCORE_AMRWB", "libopencore-amrwb");
-    enable!(configure, "BUILD_LIB_OPENH264", "libopenh264");
-    enable!(configure, "BUILD_LIB_OPENH265", "libopenh265");
-    enable!(configure, "BUILD_LIB_OPENJPEG", "libopenjpeg");
-    enable!(configure, "BUILD_LIB_OPUS", "libopus");
-    enable!(configure, "BUILD_LIB_SCHROEDINGER", "libschroedinger");
-    enable!(configure, "BUILD_LIB_SHINE", "libshine");
-    enable!(configure, "BUILD_LIB_SNAPPY", "libsnappy");
-    enable!(configure, "BUILD_LIB_SPEEX", "libspeex");
-    enable!(
-        configure,
-        "BUILD_LIB_STAGEFRIGHT_H264",
-        "libstagefright-h264"
-    );
-    enable!(configure, "BUILD_LIB_THEORA", "libtheora");
-    enable!(configure, "BUILD_LIB_TWOLAME", "libtwolame");
-    enable!(configure, "BUILD_LIB_UTVIDEO", "libutvideo");
-    enable!(configure, "BUILD_LIB_VO_AACENC", "libvo-aacenc");
-    enable!(configure, "BUILD_LIB_VO_AMRWBENC", "libvo-amrwbenc");
-    enable!(configure, "BUILD_LIB_VORBIS", "libvorbis");
-    enable!(configure, "BUILD_LIB_VPX", "libvpx");
-    enable!(configure, "BUILD_LIB_WAVPACK", "libwavpack");
-    enable!(configure, "BUILD_LIB_WEBP", "libwebp");
-    enable!(configure, "BUILD_LIB_X264", "libx264");
-    enable!(configure, "BUILD_LIB_X265", "libx265");
-    enable!(configure, "BUILD_LIB_AVS", "libavs");
-    enable!(configure, "BUILD_LIB_XVID", "libxvid");
-
-    // other external libraries
-    enable!(configure, "BUILD_NVENC", "nvenc");
-
-    // configure external protocols
-    enable!(configure, "BUILD_LIB_SMBCLIENT", "libsmbclient");
-    enable!(configure, "BUILD_LIB_SSH", "libssh");
-
-    // configure misc build options
-    enable!(configure, "BUILD_PIC", "pic");
-
-    // configure every components
-    if env::var("CARGO_FEATURE_DISABLE_EVERYTHING").is_ok() {
-        configure.arg("--disable-everything");
-    }
-
     // configure bsfs
     if env::var("CARGO_FEATURE_DISABLE_BSFS").is_ok() {
-        configure.arg("--disable-bsfs");
+        // configure.arg("--disable-bsfs");
 
         macro_rules! enable_bsf {
             ($list:expr, $name:expr) => {
@@ -394,7 +329,7 @@ fn build() -> io::Result<()> {
 
     // configure decoders
     if env::var("CARGO_FEATURE_DISABLE_DECODERS").is_ok() {
-        configure.arg("--disable-decoders");
+        // configure.arg("--disable-decoders");
 
         macro_rules! enable_decoder {
             ($list:expr, $name:expr) => {
@@ -950,7 +885,7 @@ fn build() -> io::Result<()> {
 
     // configure demuxers
     if env::var("CARGO_FEATURE_DISABLE_DEMUXERS").is_ok() {
-        configure.arg("--disable-demuxers");
+        // configure.arg("--disable-demuxers");
 
         macro_rules! enable_demuxer {
             ($list:expr, $name:expr) => {
@@ -1282,7 +1217,7 @@ fn build() -> io::Result<()> {
 
     // configure encoders
     if env::var("CARGO_FEATURE_DISABLE_ENCODERS").is_ok() {
-        configure.arg("--disable-encoders");
+        // configure.arg("--disable-encoders");
 
         macro_rules! enable_encoder {
             ($list:expr, $name:expr) => {
@@ -1527,7 +1462,7 @@ fn build() -> io::Result<()> {
 
     // configure filters
     if env::var("CARGO_FEATURE_DISABLE_FILTERS").is_ok() {
-        configure.arg("--disable-filters");
+        // configure.arg("--disable-filters");
 
         macro_rules! enable_filter {
             ($list:expr, $name:expr) => {
@@ -2009,7 +1944,7 @@ fn build() -> io::Result<()> {
 
     // configure hwaccels
     if env::var("CARGO_FEATURE_DISABLE_HWACCELS").is_ok() {
-        configure.arg("--disable-hwaccels");
+        // configure.arg("--disable-hwaccels");
 
         macro_rules! enable_hwaccel {
             ($list:expr, $name:expr) => {
@@ -2083,7 +2018,7 @@ fn build() -> io::Result<()> {
 
     // configure indevs
     if env::var("CARGO_FEATURE_DISABLE_INDEVS").is_ok() {
-        configure.arg("--disable-indevs");
+        // configure.arg("--disable-indevs");
 
         macro_rules! enable_indev {
             ($list:expr, $name:expr) => {
@@ -2124,7 +2059,7 @@ fn build() -> io::Result<()> {
 
     // configure muxers
     if env::var("CARGO_FEATURE_DISABLE_MUXERS").is_ok() {
-        configure.arg("--disable-muxers");
+        // configure.arg("--disable-muxers");
 
         macro_rules! enable_muxer {
             ($list:expr, $name:expr) => {
@@ -2310,7 +2245,7 @@ fn build() -> io::Result<()> {
 
     // configure outdevs
     if env::var("CARGO_FEATURE_DISABLE_OUTDEVS").is_ok() {
-        configure.arg("--disable-outdevs");
+        // configure.arg("--disable-outdevs");
 
         macro_rules! enable_outdev {
             ($list:expr, $name:expr) => {
@@ -2341,7 +2276,7 @@ fn build() -> io::Result<()> {
 
     // configure parsers
     if env::var("CARGO_FEATURE_DISABLE_PARSERS").is_ok() {
-        configure.arg("--disable-parsers");
+        // configure.arg("--disable-parsers");
 
         macro_rules! enable_parser {
             ($list:expr, $name:expr) => {
@@ -2408,7 +2343,7 @@ fn build() -> io::Result<()> {
 
     // configure protocols
     if env::var("CARGO_FEATURE_DISABLE_PROTOCOLS").is_ok() {
-        configure.arg("--disable-protocols");
+        // configure.arg("--disable-protocols");
 
         macro_rules! enable_protocol {
             ($list:expr, $name:expr) => {
@@ -2550,22 +2485,22 @@ fn check_features(
         ));
     }
 
-    let version_check_info = [("avcodec", 56, 60, 0, 80)];
-    for &(lib, begin_version_major, end_version_major, begin_version_minor, end_version_minor) in
-        version_check_info.iter()
-    {
-        for version_major in begin_version_major..end_version_major {
-            for version_minor in begin_version_minor..end_version_minor {
-                main_code.push_str(&format!(
-                    r#"printf("[{lib}_version_greater_than_{version_major}_{version_minor}]%d\n", LIB{lib_uppercase}_VERSION_MAJOR > {version_major} || (LIB{lib_uppercase}_VERSION_MAJOR == {version_major} && LIB{lib_uppercase}_VERSION_MINOR > {version_minor}));"#,
-                    lib = lib,
-                    lib_uppercase = lib.to_uppercase(),
-                    version_major = version_major,
-                    version_minor = version_minor
-                ));
-            }
-        }
-    }
+    // let version_check_info = [("avcodec", 56, 60, 0, 80)];
+    // for &(lib, begin_version_major, end_version_major, begin_version_minor, end_version_minor) in
+    //     version_check_info.iter()
+    // {
+    //     for version_major in begin_version_major..end_version_major {
+    //         for version_minor in begin_version_minor..end_version_minor {
+    //             main_code.push_str(&format!(
+    //                 r#"printf("[{lib}_version_greater_than_{version_major}_{version_minor}]%d\n", LIB{lib_uppercase}_VERSION_MAJOR > {version_major} || (LIB{lib_uppercase}_VERSION_MAJOR == {version_major} && LIB{lib_uppercase}_VERSION_MINOR > {version_minor}));"#,
+    //                 lib = lib,
+    //                 lib_uppercase = lib.to_uppercase(),
+    //                 version_major = version_major,
+    //                 version_minor = version_minor
+    //             ));
+    //         }
+    //     }
+    // }
 
     let out_dir = output();
 
@@ -2642,31 +2577,31 @@ fn check_features(
         }
     }
 
-    for &(lib, begin_version_major, end_version_major, begin_version_minor, end_version_minor) in
-        version_check_info.iter()
-    {
-        for version_major in begin_version_major..end_version_major {
-            for version_minor in begin_version_minor..end_version_minor {
-                let search_str = format!(
-                    "[{lib}_version_greater_than_{version_major}_{version_minor}]",
-                    version_major = version_major,
-                    version_minor = version_minor,
-                    lib = lib
-                );
-                let pos = stdout
-                    .find(&search_str)
-                    .expect("Variable not found in output")
-                    + search_str.len();
+    // for &(lib, begin_version_major, end_version_major, begin_version_minor, end_version_minor) in
+    //     version_check_info.iter()
+    // {
+    //     for version_major in begin_version_major..end_version_major {
+    //         for version_minor in begin_version_minor..end_version_minor {
+    //             let search_str = format!(
+    //                 "[{lib}_version_greater_than_{version_major}_{version_minor}]",
+    //                 version_major = version_major,
+    //                 version_minor = version_minor,
+    //                 lib = lib
+    //             );
+    //             let pos = stdout
+    //                 .find(&search_str)
+    //                 .expect("Variable not found in output")
+    //                 + search_str.len();
 
-                if &stdout[pos..pos + 1] == "1" {
-                    println!(
-                        r#"cargo:rustc-cfg=feature="{}""#,
-                        &search_str[1..(search_str.len() - 1)]
-                    );
-                }
-            }
-        }
-    }
+    //             if &stdout[pos..pos + 1] == "1" {
+    //                 println!(
+    //                     r#"cargo:rustc-cfg=feature="{}""#,
+    //                     &search_str[1..(search_str.len() - 1)]
+    //                 );
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 fn search_include(include_paths: &[PathBuf], header: &str) -> String {
@@ -2726,7 +2661,7 @@ fn link_libs_for_module(module: &str) {
 fn main() {
     let statik = env::var("CARGO_FEATURE_STATIC").is_ok();
 
-    let include_paths: Vec<PathBuf> = if env::var("CARGO_FEATURE_BUILD").is_ok() {
+    let include_paths: Vec<PathBuf> = if env::var("CARGO_FEATURE_BUNDLED").is_ok() {
         println!(
             "cargo:rustc-link-search=native={}",
             search().join("lib").to_string_lossy()
