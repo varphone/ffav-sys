@@ -26,11 +26,7 @@
  * Shows how the metadata API can be used in application programs.
  * @example metadata.rs
  */
-use ffi::{
-    av_dict_get, avformat_close_input, avformat_find_stream_info, avformat_open_input,
-    AVDictionaryEntry, AVFormatContext, AV_DICT_IGNORE_SUFFIX,
-};
-use ffmpeg_sys_next as ffi;
+use ffav_sys::*;
 use std::env;
 use std::ffi::{CStr, CString};
 

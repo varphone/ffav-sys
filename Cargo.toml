@@ -1,16 +1,20 @@
 [package]
-name    = "ffmpeg-sys-next"
+name    = "ffav-sys"
 version = "4.3.0"
 build   = "build.rs"
 links   = "ffmpeg"
 edition = "2018"
 
-authors = ["meh. <meh@schizofreni.co>", "Zhiming Wang <i@zhimingwang.org>"]
+authors = [
+    "meh. <meh@schizofreni.co>",
+    "Zhiming Wang <i@zhimingwang.org>",
+    "Varphone Wong <varphone@qq.com>"
+]
 license = "WTFPL"
 
 description = "FFI bindings to FFmpeg"
-repository  = "https://github.com/zmwangx/rust-ffmpeg-sys"
-keywords    = ["audio", "video"]
+repository  = "https://github.com/varphone/ffav-sys"
+keywords    = ["ffi", "audio", "video"]
 
 [lib]
 # Disable doctests as a workaround for https://github.com/rust-lang/rust-bindgen/issues/1313

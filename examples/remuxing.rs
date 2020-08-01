@@ -28,7 +28,7 @@
  * Remux streams from one container format to another.
  * @example remuxing.rs
  */
-use ffmpeg_sys_next::{AVMediaType::*, *};
+use ffav_sys::{AVMediaType::*, *};
 use std::convert::TryInto;
 use std::env;
 use std::ffi::CString;

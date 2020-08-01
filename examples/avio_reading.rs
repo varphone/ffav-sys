@@ -29,12 +29,7 @@
  * AVIOContext read callback.
  * @example avio_reading.rs
  */
-use ffi::{
-    av_dump_format, av_err2str, av_file_map, av_file_unmap, av_freep, av_malloc,
-    avformat_alloc_context, avformat_close_input, avformat_find_stream_info, avformat_open_input,
-    avio_alloc_context, avio_context_free, AVFormatContext, AVIOContext, AVERROR, AVERROR_EOF,
-};
-use ffmpeg_sys_next as ffi;
+use ffav_sys::*;
 use libc::{c_void, ENOMEM};
 use std::convert::TryInto;
 use std::env;
