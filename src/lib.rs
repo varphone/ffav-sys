@@ -10,6 +10,8 @@ extern crate libc;
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-#[macro_use]
+mod avcodec;
+pub use avcodec::*;
+
 mod avutil;
 pub use avutil::*;
