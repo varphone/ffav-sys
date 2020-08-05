@@ -13,5 +13,8 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 mod avcodec;
 pub use avcodec::*;
 
+mod avformat;
+pub use avformat::*;
+
 mod avutil;
 pub use avutil::*;
