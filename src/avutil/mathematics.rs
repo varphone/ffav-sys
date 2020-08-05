@@ -1,10 +1,4 @@
-use crate::{AVRational, AVRounding};
-
-impl Default for AVRational {
-    fn default() -> Self {
-        AVRational { den: 0, num: 0 }
-    }
-}
+use crate::AVRounding;
 
 impl From<AVRounding> for u32 {
     fn from(v: AVRounding) -> u32 {

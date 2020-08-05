@@ -1,6 +1,24 @@
 use crate::AVRational;
 use libc::{c_double, c_int};
 
+impl Default for AVRational {
+    fn default() -> Self {
+        AVRational { den: 0, num: 0 }
+    }
+}
+
+impl AVRational {
+    #[inline]
+    pub fn new(num: i32, den: i32) -> Self {
+        AVRational { num, den }
+    }
+
+    #[inline]
+    pub fn with_normalize(value: i32) -> Self {
+        AVRational { num: 1, den: value }
+    }
+}
+
 /// # Safety
 #[inline(always)]
 pub unsafe fn av_make_q(num: c_int, den: c_int) -> AVRational {
