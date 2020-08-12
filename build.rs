@@ -262,6 +262,7 @@ fn build() -> io::Result<()> {
     // configure.arg("--disable-txtpages");
 
     // disable x86asm when nasm or yasm not exists
+    #[allow(clippy::collapsible_if)]
     if cfg!(any(target_arch = "x86", target_arch = "x86_64")) {
         if !check_prog("nasm", &["--version"]) && !check_prog("yasm", &["--version"]) {
             configure.arg("--disable-x86asm");
