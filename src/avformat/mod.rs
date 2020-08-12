@@ -5,16 +5,19 @@ use crate::{
 use std::convert::TryInto;
 
 impl AVFormatContext {
+    /// Number of elements in AVFormatContext.streams.
     #[inline]
     pub fn nb_streams(&self) -> usize {
         self.nb_streams as usize
     }
 
+    /// A list of all streams in the file.
     #[inline]
     pub fn streams(&self) -> &[&AVStream] {
         unsafe { std::slice::from_raw_parts(self.streams as *const &AVStream, self.nb_streams()) }
     }
 
+    /// A list of all streams in the file.
     #[inline]
     pub fn streams_mut(&self) -> &[&mut AVStream] {
         unsafe {
@@ -22,11 +25,13 @@ impl AVFormatContext {
         }
     }
 
+    /// Number of elements in AVFormatContext.programs.
     #[inline]
     pub fn nb_programs(&self) -> usize {
         self.nb_programs as usize
     }
 
+    /// A list of all programs in the file.
     #[inline]
     pub fn programs(&self) -> &[&AVProgram] {
         unsafe {
@@ -34,6 +39,7 @@ impl AVFormatContext {
         }
     }
 
+    /// A list of all programs in the file.
     #[inline]
     pub fn programs_mut(&self) -> &[&mut AVProgram] {
         unsafe {
@@ -41,11 +47,13 @@ impl AVFormatContext {
         }
     }
 
+    /// Number of elements in AVFormatContext.chapters.
     #[inline]
     pub fn nb_chapters(&self) -> usize {
         self.nb_chapters as usize
     }
 
+    /// A list of all chapters in the file.
     #[inline]
     pub fn chapters(&self) -> &[&AVChapter] {
         unsafe {
@@ -53,6 +61,7 @@ impl AVFormatContext {
         }
     }
 
+    /// A list of all chapters in the file.
     #[inline]
     pub fn chapters_mut(&self) -> &[&mut AVChapter] {
         unsafe {
