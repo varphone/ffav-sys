@@ -30,7 +30,6 @@
  * @example dump_framed.rs
  */
 use ffav_sys::*;
-use libc::{c_void, ENOMEM};
 use std::convert::TryInto;
 use std::env;
 use std::fs::OpenOptions;
