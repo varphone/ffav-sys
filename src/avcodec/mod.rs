@@ -1,4 +1,33 @@
-use crate::{AVCodecID, AVPacket, AVPixelFormat, AVSampleFormat, AV_NOPTS_VALUE};
+use crate::{
+    AVCodecContext, AVCodecID, AVPacket, AVPacketSideData, AVPixelFormat, AVSampleFormat,
+    AV_NOPTS_VALUE,
+};
+use std::convert::TryInto;
+
+impl AVCodecContext {
+    /// Some codecs need / can use extradata like Huffman tables.
+    #[inline]
+    pub fn extradata(&self) -> &[u8] {
+        unsafe {
+            std::slice::from_raw_parts(self.extradata, self.extradata_size.try_into().unwrap())
+        }
+    }
+
+    /// Additional data associated with the entire coded stream.
+    #[inline]
+    pub fn coded_side_data(&self) -> &[AVPacketSideData] {
+        if self.coded_side_data.is_null() || self.nb_coded_side_data <= 0 {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.coded_side_data,
+                    self.nb_coded_side_data.try_into().unwrap(),
+                )
+            }
+        }
+    }
+}
 
 impl Default for AVCodecID {
     fn default() -> Self {
@@ -22,6 +51,28 @@ impl Default for AVPacket {
             pos: -1,
             convergence_duration: 0,
         }
+    }
+}
+
+impl AVPacket {
+    /// Returns true if data bytes has a length of zero bytes.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Returns the length of data bytes.
+    pub fn len(&self) -> usize {
+        self.size as usize
+    }
+
+    /// Converts a data ptr to a byte slice.
+    pub fn as_bytes(&self) -> &[u8] {
+        unsafe { std::slice::from_raw_parts(self.data, self.size as usize) }
+    }
+
+    /// Converts a mutable data ptr to a mutable byte slice.
+    pub fn as_bytes_mut(&self) -> &mut [u8] {
+        unsafe { std::slice::from_raw_parts_mut(self.data, self.size as usize) }
     }
 }
 
