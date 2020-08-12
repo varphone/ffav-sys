@@ -175,6 +175,8 @@ fn fetch() -> io::Result<()> {
     let status = Command::new("git")
         .current_dir(&output())
         .arg("clone")
+        .arg("--depth")
+        .arg("1")
         .arg("-b")
         .arg(format!("release/{}", version()))
         .arg(url)
