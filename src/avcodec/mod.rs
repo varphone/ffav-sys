@@ -52,6 +52,11 @@ impl Default for AVPacket {
 }
 
 impl AVPacket {
+    /// Return a empty packet.
+    pub fn empty() -> Self {
+        Default::default()
+    }
+
     /// Returns true if data bytes has a length of zero bytes.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
