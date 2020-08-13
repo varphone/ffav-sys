@@ -125,7 +125,7 @@ impl AVStream {
 
     /// Mutable metadata of the stream.
     #[inline]
-    pub fn metadata_mut(&mut self) -> Option<&AVDictionary> {
+    pub fn metadata_mut(&mut self) -> Option<&mut AVDictionary> {
         if self.metadata.is_null() {
             None
         } else {
