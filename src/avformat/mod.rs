@@ -72,12 +72,24 @@ impl AVFormatContext {
 
 impl AVStream {
     /// The context of the encoded stream.
+    #[deprecated]
     #[inline]
     pub fn codec(&self) -> Option<&AVCodecContext> {
         if self.codec.is_null() {
             None
         } else {
             unsafe { Some(&*self.codec) }
+        }
+    }
+
+    /// The context of the encoded stream.
+    #[deprecated]
+    #[inline]
+    pub fn codec_mut(&self) -> Option<&mut AVCodecContext> {
+        if self.codec.is_null() {
+            None
+        } else {
+            unsafe { Some(&mut *self.codec) }
         }
     }
 
@@ -91,13 +103,33 @@ impl AVStream {
         }
     }
 
-    /// Metadata of the stream.
+    /// The mutable properties of the encoded stream.
+    #[inline]
+    pub fn codecpar_mut(&mut self) -> Option<&mut AVCodecParameters> {
+        if self.codecpar.is_null() {
+            None
+        } else {
+            unsafe { Some(&mut *self.codecpar) }
+        }
+    }
+
+    /// The metadata of the stream.
     #[inline]
     pub fn metadata(&self) -> Option<&AVDictionary> {
         if self.metadata.is_null() {
             None
         } else {
             unsafe { Some(&*self.metadata) }
+        }
+    }
+
+    /// Mutable metadata of the stream.
+    #[inline]
+    pub fn metadata_mut(&mut self) -> Option<&AVDictionary> {
+        if self.metadata.is_null() {
+            None
+        } else {
+            unsafe { Some(&mut *self.metadata) }
         }
     }
 
@@ -109,6 +141,21 @@ impl AVStream {
         } else {
             unsafe {
                 std::slice::from_raw_parts(self.side_data, self.nb_side_data.try_into().unwrap())
+            }
+        }
+    }
+
+    /// A mutable array of side data that applies to the stream.
+    #[inline]
+    pub fn side_data_mut(&mut self) -> &mut [AVPacketSideData] {
+        if self.side_data.is_null() || self.nb_side_data <= 0 {
+            &mut []
+        } else {
+            unsafe {
+                std::slice::from_raw_parts_mut(
+                    self.side_data,
+                    self.nb_side_data.try_into().unwrap(),
+                )
             }
         }
     }
