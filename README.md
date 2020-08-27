@@ -2,6 +2,7 @@ ffav-sys
 ========
 
 [![ffav-sys on crates.io](https://img.shields.io/crates/v/ffav-sys?cacheSeconds=3600)](https://crates.io/crates/ffav-sys)
+[![Build Status](https://ci.vaxpl.com/api/badges/rdst/ffav-sys/status.svg?ref=refs/heads/{{BRANCH_NAME}})](https://ci.vaxpl.com/rdst/ffav-sys)
 
 This is a fork of the abandoned [ffmpeg-sys-next](https://github.com/zmwangx/rust-ffmpeg-sys) crate. You can find this crate as [ffav-sys](https://crates.io/crates/ffav-sys) on crates.io.
 
