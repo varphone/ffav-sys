@@ -9,9 +9,11 @@ platform:
 
 steps:
 - name: check format and lints
+  environment:
+    FFMPEG_GIT_URL: "https://code.vaxpl.com/git/rdst/FFmpeg.git"
   commands:
   - cargo fmt -- --check
-  - cargo clippy
+  - cargo clippy --features bundled
 
 - name: build
   environment:
