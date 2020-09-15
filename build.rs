@@ -200,10 +200,22 @@ fn switch(configure: &mut Command, feature: &str, name: &str) {
 }
 
 fn check_prog(name: &str, args: &[&str]) -> bool {
-    Command::new(name).args(args).status().is_ok()
+    if let Ok(out) = Command::new(name).args(args).output() {
+        out.status.success()
+    } else {
+        false
+    }
 }
 
 fn build() -> io::Result<()> {
+    // make sure the `make` exists
+    if !check_prog("make", &["--version"]) {
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            "The `make` not found, install or add to PATH and try again!",
+        ));
+    }
+
     let mut configure = Command::new("./configure");
     configure.current_dir(&source());
     configure.arg(format!("--prefix={}", search().to_string_lossy()));
