@@ -13,7 +13,7 @@ steps:
     FFMPEG_GIT_URL: "https://code.vaxpl.com/git/rdst/FFmpeg.git"
   commands:
   - cargo fmt -- --check
-  - RUSTC_WRAPPER=sccache cargo clippy --features bundled
+  - cargo clippy --features bundled
 
 - name: build
   environment:
