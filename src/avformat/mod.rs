@@ -1,10 +1,28 @@
 use crate::{
-    AVChapter, AVCodecContext, AVCodecParameters, AVDictionary, AVFormatContext, AVPacketSideData,
-    AVProgram, AVStream,
+    AVChapter, AVCodecContext, AVCodecParameters, AVDictionary, AVFormatContext, AVIOContext,
+    AVPacketSideData, AVProgram, AVStream,
 };
 use std::convert::TryInto;
 
 impl AVFormatContext {
+    /// Returns the reference of the I/O context.
+    pub fn pb(&self) -> Option<&AVIOContext> {
+        if self.pb.is_null() {
+            None
+        } else {
+            unsafe { Some(&*self.pb) }
+        }
+    }
+
+    /// Returns the mutable reference of the I/O context.
+    pub fn pb_mut(&self) -> Option<&mut AVIOContext> {
+        if self.pb.is_null() {
+            None
+        } else {
+            unsafe { Some(&mut *self.pb) }
+        }
+    }
+
     /// Number of elements in AVFormatContext.streams.
     #[inline]
     pub fn nb_streams(&self) -> usize {
