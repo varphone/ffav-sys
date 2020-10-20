@@ -1,8 +1,10 @@
 use crate::{
-    AVCodecContext, AVCodecID, AVPacket, AVPacketSideData, AVPixelFormat, AVSampleFormat,
-    AV_NOPTS_VALUE,
+    AVCodecContext, AVCodecID, AVMediaType, AVPacket, AVPacketSideData, AVPixelFormat,
+    AVSampleFormat, AV_NOPTS_VALUE,
 };
+use std::borrow::Cow;
 use std::convert::TryInto;
+use std::ffi::CStr;
 
 impl AVCodecContext {
     /// Some codecs need / can use extradata like Huffman tables.
@@ -29,6 +31,36 @@ impl AVCodecContext {
 impl Default for AVCodecID {
     fn default() -> Self {
         AVCodecID::AV_CODEC_ID_NONE
+    }
+}
+
+impl AVCodecID {
+    /// Get the type of the given codec.
+    pub fn get_type(self) -> AVMediaType {
+        unsafe { crate::avcodec_get_type(self) }
+    }
+
+    /// Get the name of the given codec.
+    pub fn get_name(self) -> Cow<'static, str> {
+        unsafe {
+            let name = crate::avcodec_get_name(self);
+            if name.is_null() {
+                Cow::Borrowed("<Unknown>")
+            } else {
+                CStr::from_ptr(name).to_string_lossy()
+            }
+        }
+    }
+
+    /// Return true if the given codec has GOP props.
+    /// # Notes
+    /// The types annotations is incomplete.
+    pub fn has_gop(self) -> bool {
+        use AVCodecID::*;
+        matches!(
+            self,
+            AV_CODEC_ID_H264 | AV_CODEC_ID_HEVC | AV_CODEC_ID_VP8 | AV_CODEC_ID_VP9
+        )
     }
 }
 
