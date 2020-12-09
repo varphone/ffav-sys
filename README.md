@@ -6,7 +6,7 @@ ffav-sys
 
 This is a fork of the abandoned [ffmpeg-sys-next](https://github.com/zmwangx/rust-ffmpeg-sys) crate. You can find this crate as [ffav-sys](https://crates.io/crates/ffav-sys) on crates.io.
 
-This crate contains low level bindings to FFmpeg. You're probably interested in the high level bindings instead: [ffav-rs](https://github.com/varphone/ffav-rs).
+This crate contains low level bindings to FFmpeg. You're probably interested in the high level bindings instead: [ffav-rs](https://github.com/vaxpl/ffav-rs).
 
 A word on versioning: major and minor versions track major and minor versions of FFmpeg, e.g. 4.2.x of this crate has been updated to support the 4.2.x series of FFmpeg. Patch level is reserved for bug fixes of this crate and does not track FFmpeg patch versions.
 

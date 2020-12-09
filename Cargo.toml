@@ -13,7 +13,7 @@ authors = [
 license = "WTFPL"
 
 description = "FFI bindings to FFmpeg"
-repository  = "https://github.com/varphone/ffav-sys"
+repository  = "https://github.com/vaxpl/ffav-sys"
 keywords    = ["ffi", "audio", "video"]
 
 [lib]
