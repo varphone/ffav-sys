@@ -5,6 +5,7 @@
 #![allow(clippy::approx_constant)]
 #![allow(clippy::redundant_static_lifetimes)]
 #![allow(clippy::type_complexity)]
+#![allow(clippy::upper_case_acronyms)]
 
 extern crate libc;
 
