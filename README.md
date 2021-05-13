@@ -25,9 +25,16 @@ to tell the `clang` where to find the headers, if not do this, the `bindgen` may
 thread 'main' panicked at 'Unable to generate baldrapi.h bindings: ()', src/libcore/result.rs:1009:5
 ```
 
-For example, to build with `--target=aarch64-unknown-linux-gnu`:
+For example, to build with `--target=aarch64-unknown-linux-gnu --features=bundled`:
+
+```toml
+# .cargo/config.toml:
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"
+```
 
 ```sh
+# Shell commands:
 export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/usr/aarch64-linux-gnu"
-cargo build --target=-aarch64-unknown-linux-gnu
+cargo build --target=aarch64-unknown-linux-gnu --features=bundled
 ```
